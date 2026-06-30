@@ -5,10 +5,10 @@
    Google Apps Script Anda (lihat PANDUAN-SETUP.md).
    ======================================================= */
 
-const API_URL = 'https://script.google.com/macros/s/AKfycbylHJTmcvmRdPz50OrtZgRRwbcMA6PjCZUYCHdhw0rNV9ODNmL5qX_2sJsqIr1qMUqO2w/exec';
+const API_URL = 'https://script.google.com/macros/s/AKfycbyPqgSAi1-fOieflXLvw9m2vKB7RK71xZ2ZkY15kOopmGvimitkuRyRHQrDuOG6Xf_rfA/exec';
 
 function isApiConfigured(){
-  return !!API_URL && API_URL.indexOf('https://script.google.com/macros/s/AKfycbylHJTmcvmRdPz50OrtZgRRwbcMA6PjCZUYCHdhw0rNV9ODNmL5qX_2sJsqIr1qMUqO2w/exec') === -1;
+  return !!API_URL && API_URL.indexOf('https://script.google.com/macros/s/AKfycbyPqgSAi1-fOieflXLvw9m2vKB7RK71xZ2ZkY15kOopmGvimitkuRyRHQrDuOG6Xf_rfA/exec') === -1;
 }
 
 /* ---------- ambil elemen DOM ---------- */
