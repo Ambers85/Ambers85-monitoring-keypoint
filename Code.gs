@@ -17,7 +17,7 @@
 
 const SPREADSHEET_ID = '18SQzbDUIpH7z3WJ7npzht5XFe7Wl8F3fJ4mGBhg0_es';
 const SHEET_NAME = 'Data Keypoint';
-const FOLDER_NAME = 'Foto Keypoint - Monitoring App';
+const FOLDER_NAME = 'dashboard-monitoring-sistem';
 
 // Urutan kolom di spreadsheet. ID diletakkan di akhir karena
 // kolom-kolom di depan mengikuti urutan yang diminta pengguna.
