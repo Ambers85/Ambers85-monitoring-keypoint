@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Monitoring Keypoint Jaringan</title>
+<meta name="description" content="Pencatatan status switching keypoint FCO/LBS/Recloser dengan lokasi GPS dan bukti foto, tersimpan ke Google Spreadsheet.">
+
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#1b1f24">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="KeypointLog">
+<link rel="icon" type="image/png" href="./icons/icon-192.png">
+<link rel="apple-touch-icon" href="./icons/icon-192.png">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+<div class="frame">
+
+  <header class="nameplate">
+    <span class="rivet rivet-tl"></span>
+    <span class="rivet rivet-tr"></span>
+    <span class="rivet rivet-bl"></span>
+    <span class="rivet rivet-br"></span>
+    <div class="nameplate-row">
+      <div>
+        <h1 class="nameplate-title">MONITORING<br>KEYPOINT JARINGAN</h1>
+        <p class="nameplate-sub">Switching log FCO &middot; LBS &middot; Recloser</p>
+      </div>
+      <div class="nameplate-meta">
+        <span id="connStatus" class="conn-pill online">ONLINE</span>
+        <button id="installBtn" class="btn-ghost-sm hidden" type="button">Pasang App</button>
+      </div>
+    </div>
+  </header>
+
+  <div id="apiWarning" class="banner banner-warning hidden">
+    <strong>Backend belum terhubung.</strong> Buka <code>app.js</code>, ganti nilai <code>API_URL</code> dengan URL Web App Apps Script Anda. Lihat <code>PANDUAN-SETUP.md</code> untuk langkah lengkap.
+  </div>
+
+  <div id="pendingInfo" class="banner banner-info hidden">
+    <span><span id="pendingCount">0</span> data tertunda (belum tersinkron)</span>
+    <button id="btnSyncNow" type="button" class="btn-ghost-sm">Sinkron Sekarang</button>
+  </div>
+
+  <main>
+
+    <section class="panel" id="status-section">
+      <p class="eyebrow">Status Keypoint</p>
+
+      <div class="indicator-row">
+        <div class="indicator-window" aria-live="polite">
+          <div class="indicator-bezel">
+            <div id="statusFlag" class="flag-face flag-neutral">&mdash;</div>
+          </div>
+        </div>
+        <div class="indicator-caption">
+          <p class="indicator-caption-label">Posisi saat ini</p>
+          <p class="indicator-caption-help">Pilih salah satu tombol untuk menetapkan status, lalu lengkapi data di bawah.</p>
+        </div>
+      </div>
+
+      <div class="status-btn-row">
+        <button type="button" id="btnStatusOpen" class="btn-status btn-open">OPEN</button>
+        <button type="button" id="btnStatusClose" class="btn-status btn-close">CLOSE</button>
+      </div>
+    </section>
+
+    <section class="panel" id="form-section">
+      <form id="keypointForm" novalidate>
+
+        <p class="eyebrow">Data Keypoint</p>
+        <div class="field">
+          <label for="namaKeypoint">Nama Keypoint</label>
+          <input type="text" id="namaKeypoint" name="namaKeypoint" placeholder="Contoh: FCO Tegal 02 / LBS Krapyak 1 / REC Pemalang 3" autocomplete="off" required>
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="jamLepas">Jam Lepas</label>
+            <input type="time" id="jamLepas" name="jamLepas">
+          </div>
+          <div class="field">
+            <label for="jamNormal">Jam Normal</label>
+            <input type="time" id="jamNormal" name="jamNormal">
+          </div>
+        </div>
+
+        <p class="eyebrow">Lokasi &amp; Bukti Foto</p>
+        <div class="field">
+          <label>Titik Koordinat GPS</label>
+          <div class="location-box">
+            <button type="button" id="btnAmbilLokasi" class="btn-secondary">Ambil Lokasi GPS</button>
+            <p id="lokasiInfo" class="mono-value">Lokasi belum diambil</p>
+            <a id="lihatPetaLink" href="#" target="_blank" rel="noopener" class="hidden link-sm">Lihat di peta &#8599;</a>
+          </div>
+        </div>
+
+        <div class="field">
+          <label>Foto Lapangan</label>
+          <input type="file" id="inputFoto" accept="image/*" capture="environment" class="hidden">
+          <button type="button" id="btnAmbilFoto" class="btn-secondary">Ambil Foto</button>
+          <p id="fotoPlaceholder" class="help-text">Foto akan otomatis diberi cap tanggal/waktu &amp; koordinat.</p>
+          <div id="fotoPreviewWrap" class="foto-preview-wrap hidden">
+            <img id="fotoPreviewImg" alt="Pratinjau foto keypoint" class="foto-preview-img">
+          </div>
+        </div>
+
+        <p class="eyebrow">Keterangan</p>
+        <div class="field">
+          <label for="keterangan">Catatan Kondisi</label>
+          <textarea id="keterangan" name="keterangan" rows="3" placeholder="Contoh: CO putus 1 phasa"></textarea>
+        </div>
+
+        <div id="formMessage" class="form-message" role="status"></div>
+
+        <div class="form-actions">
+          <button type="submit" id="submitBtn" class="btn-primary">Simpan Data</button>
+          <button type="button" id="cancelEditBtn" class="btn-ghost hidden">Batal Ubah</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="panel" id="history-section">
+      <p class="eyebrow">Riwayat</p>
+
+      <div class="history-toolbar">
+        <input type="search" id="searchInput" class="search-input" placeholder="Cari nama keypoint / keterangan...">
+        <button type="button" id="btnRefresh" class="btn-ghost-sm" title="Muat ulang">&#8635;</button>
+      </div>
+      <div class="filter-chip-row">
+        <button type="button" class="chip active" id="filterAll" data-filter="ALL">Semua</button>
+        <button type="button" class="chip chip-open" id="filterOpen" data-filter="OPEN">Open</button>
+        <button type="button" class="chip chip-close" id="filterClose" data-filter="CLOSE">Close</button>
+      </div>
+
+      <div id="loadingState" class="state-msg hidden">Memuat data&hellip;</div>
+      <div id="historyError" class="state-msg state-error hidden"></div>
+      <div id="emptyState" class="state-msg hidden">Belum ada data tercatat. Isi formulir di atas untuk mulai mencatat status keypoint.</div>
+
+      <div id="historyList" class="history-list"></div>
+    </section>
+
+  </main>
+
+  <footer class="app-footer">
+    <p>Tersimpan ke Google Spreadsheet &middot; v1.0</p>
+  </footer>
+
+</div>
+
+<script src="./app.js" defer></script>
+</body>
+</html>
